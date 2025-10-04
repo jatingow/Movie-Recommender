@@ -26,7 +26,7 @@ It recommends movies based on the user's favorite **genres, actors, and films**,
 | **Frontend** | HTML, CSS, JavaScript |
 | **API** | [TMDB (The Movie Database)](https://www.themoviedb.org/documentation/api) |
 | **Data Format** | JSON |
-| **Deployment** | Localhost (Flask) |
+| **Deployment** | Render |
 
 ---
 
