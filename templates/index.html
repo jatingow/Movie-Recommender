@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Personalized Movie Recommender</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎥 Personalized Movie Recommender</h1>
+
+        <form id="preferenceForm">
+            <h3>Select Your Favorite Genres</h3>
+            <div id="genresContainer">
+                {% for g in genres %}
+                <label>
+                    <input type="checkbox" name="genre" value="{{ g['id'] }}">
+                    <span class="genre-tag">{{ g['name'] }}</span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <h3>Favorite Actors (comma-separated)</h3>
+            <input type="text" id="actors" placeholder="e.g. Leonardo DiCaprio, Robert Downey Jr.">
+
+            <h3>Favorite Movies (comma-separated)</h3>
+            <input type="text" id="movies" placeholder="e.g. Inception, Iron Man">
+
+            <button type="button" onclick="getRecommendations(1)">Get Recommendations</button>
+        </form>
+
+        <div id="results">
+        </div>
+
+        <div id="pagination"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
