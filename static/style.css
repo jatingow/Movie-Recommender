@@ -1,189 +1,278 @@
-/* Import Google Font */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-/* Define Color Palette and Base Styles */
 :root {
-    --dark-navy: #020c1b;
-    --navy: #0a192f;
-    --light-navy: #172a45;
-    --slate: #8892b0;
-    --light-slate: #a8b2d1;
-    --lightest-slate: #ccd6f6;
-    --accent-blue: #3f84e5;
-    --accent-hover: #64ffda;
-    /* A vibrant mint for contrast on hover */
+    --bg-main: #08080a;
+    --bg-secondary: #121216;
+    --accent-red: #E50914;
+    /* Pure cinematic red */
+    --text-primary: #ffffff;
+    --text-muted: #a1a1aa;
+    --border-color: #27272a;
 }
 
 body {
-    font-family: "Poppins", sans-serif;
-    background-color: var(--dark-navy);
-    color: var(--light-slate);
-    text-align: center;
-    margin: 40px 0;
-    font-weight: 300;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0 0 80px 0;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Main Container Styling */
-.container {
-    background-color: var(--navy);
-    padding: 40px;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 900px;
-    margin: auto;
-    box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.7);
-    border: 1px solid var(--light-navy);
-}
-
-h1 {
-    color: var(--lightest-slate);
-    font-weight: 600;
-    margin-bottom: 30px;
-}
-
-h3 {
-    color: var(--light-slate);
-    font-weight: 400;
-    margin-top: 40px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--light-navy);
-    padding-bottom: 10px;
-}
-
-/* Form Elements */
-input[type="text"] {
-    width: 80%;
-    padding: 12px 15px;
-    margin: 10px;
-    border: 1px solid var(--light-navy);
-    background-color: var(--dark-navy);
-    color: var(--lightest-slate);
-    border-radius: 5px;
-    font-family: "Poppins", sans-serif;
-    transition: all 0.2s ease-in-out;
-}
-
-input[type="text"]::placeholder {
-    color: var(--slate);
-}
-
-input[type="text"]:focus {
-    outline: none;
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 10px -2px var(--accent-blue);
-}
-
-button,
-.pagination-btn {
-    padding: 12px 25px;
-    border: 1px solid var(--accent-blue);
-    background-color: transparent;
-    color: var(--accent-blue);
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    transition: all 0.2s ease-in-out;
-    margin-top: 20px;
-}
-
-button:hover,
-.pagination-btn:hover {
-    background-color: var(--accent-hover);
-    color: var(--dark-navy);
-    border-color: var(--accent-hover);
-    transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-/* Custom Checkbox Styling for Genres */
-#genresContainer {
+/* --- Navbar --- */
+.navbar {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: rgba(8, 8, 10, 0.95);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo i {
+    color: var(--accent-red);
+}
+
+.nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    margin: 0 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+    color: var(--text-primary);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.user-avatar {
+    background-color: #333;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
     justify-content: center;
+}
+
+/* --- Layout --- */
+.main-container {
+    padding: 40px;
+    max-width: 1400px;
+    margin: auto;
+}
+
+.content-section {
+    margin-bottom: 60px;
+}
+
+.section-header {
+    margin-bottom: 25px;
+}
+
+.section-header h2 {
+    font-size: 1.6rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 
-#genresContainer label {
-    position: relative;
-    /* Needed for hiding the checkbox */
+.section-header p {
+    color: var(--text-muted);
+    margin: 8px 0 0 35px;
+    font-size: 0.9rem;
 }
 
-#genresContainer input[type="checkbox"] {
-    display: none;
-    /* Hide the default checkbox */
-}
-
-#genresContainer .genre-tag {
-    display: inline-block;
-    padding: 8px 16px;
-    background-color: var(--light-navy);
-    color: var(--light-slate);
-    border: 1px solid transparent;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-}
-
-#genresContainer input[type="checkbox"]:checked+.genre-tag {
-    background-color: var(--accent-blue);
-    color: var(--lightest-slate);
-    border-color: var(--accent-blue);
-    font-weight: 600;
-}
-
-#genresContainer .genre-tag:hover {
-    border-color: var(--accent-blue);
-    color: var(--lightest-slate);
-}
-
-/* Results and Movie Card Styling */
-#results {
-    margin-top: 40px;
+/* --- Movie Grid (Matches uploaded image style) --- */
+.movie-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 25px;
 }
 
 .movie-card {
-    background: var(--light-navy);
-    border-radius: 10px;
-    text-align: center;
-    overflow: hidden;
-    /* Ensures image border-radius is respected */
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
 .movie-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-    border-color: var(--accent-hover);
+    transform: scale(1.05);
 }
 
-.movie-card img {
+.movie-poster-container {
     width: 100%;
-    height: auto;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    aspect-ratio: 2 / 3;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
 }
 
-.movie-card h4 {
-    padding: 15px 10px;
+.movie-poster-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.movie-info h4 {
     margin: 0;
-    color: var(--lightest-slate);
-    font-weight: 400;
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
 }
 
-/* Pagination Styling */
+.movie-info p {
+    margin: 4px 0 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* --- Recommendation Engine Form --- */
+.discovery-panel {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 30px;
+    border: 1px solid var(--border-color);
+}
+
+.input-row {
+    display: flex;
+    gap: 20px;
+}
+
+.input-group {
+    flex: 1;
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 14px 18px;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    font-size: 0.95rem;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--text-muted);
+}
+
+/* Genres Checkboxes */
+#genresContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#genresContainer input[type="checkbox"] {
+    display: none;
+}
+
+.genre-tag {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: var(--bg-main);
+    color: var(--text-muted);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition: 0.2s ease;
+}
+
+#genresContainer input[type="checkbox"]:checked+.genre-tag {
+    background-color: var(--accent-red);
+    color: white;
+    border-color: var(--accent-red);
+    font-weight: 600;
+}
+
+.generate-btn {
+    padding: 14px 30px;
+    background-color: var(--accent-red);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.generate-btn:hover {
+    background-color: #b80710;
+}
+
+/* --- Pagination --- */
 #pagination {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    align-items: center;
+    gap: 15px;
     margin-top: 40px;
 }
 
-.pagination-btn {
-    padding: 8px 16px;
-    margin-top: 0;
+#pagination button {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#pagination button:hover:not(:disabled) {
+    border-color: var(--text-muted);
+}
+
+#pagination button:disabled {
+    color: #4a4a55;
+    cursor: not-allowed;
 }

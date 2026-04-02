@@ -3,9 +3,8 @@ import requests
 
 app = Flask(__name__)
 
-API_KEY = "271274173a33097a96c2c6e7495bec0e"  # 👈 replace with your TMDB API key
+API_KEY = "271274173a33097a96c2c6e7495bec0e"  # 👈 Replace with your TMDB API key
 BASE_URL = "https://api.themoviedb.org/3"
-
 
 # ---------- Safe Request Function ---------- #
 def safe_request(url, params=None):
@@ -15,15 +14,13 @@ def safe_request(url, params=None):
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"⚠️ API connection error: {e}")
-        return {}  # return empty JSON if failed
-
+        return {} 
 
 # ---------- Helper Functions ---------- #
 def get_genre_list():
     url = f"{BASE_URL}/genre/movie/list"
     data = safe_request(url, {"api_key": API_KEY})
     return data.get("genres", [])
-
 
 def search_actor(actor_name):
     url = f"{BASE_URL}/search/person"
@@ -32,14 +29,12 @@ def search_actor(actor_name):
         return data["results"][0]["id"]
     return None
 
-
 def search_movie(movie_name):
     url = f"{BASE_URL}/search/movie"
     data = safe_request(url, {"api_key": API_KEY, "query": movie_name})
     if data.get("results"):
         return data["results"][0]["id"]
     return None
-
 
 def discover_movies(genres=None, actors=None, page=1):
     params = {
@@ -55,12 +50,10 @@ def discover_movies(genres=None, actors=None, page=1):
     data = safe_request(f"{BASE_URL}/discover/movie", params)
     return format_movie_results(data)
 
-
 def get_similar_movies(movie_id, page=1):
     url = f"{BASE_URL}/movie/{movie_id}/similar"
     data = safe_request(url, {"api_key": API_KEY, "page": page})
     return format_movie_results(data)
-
 
 def format_movie_results(data):
     results = []
@@ -75,13 +68,19 @@ def format_movie_results(data):
         })
     return results
 
-
 # ---------- Routes ---------- #
 @app.route('/')
 def home():
     genres = get_genre_list() or []
     return render_template('index.html', genres=genres)
 
+@app.route('/api/trending', methods=['GET'])
+def get_trending():
+    """Fetches the trending movies of the week for the Talk of the Town section."""
+    url = f"{BASE_URL}/trending/movie/week"
+    data = safe_request(url, {"api_key": API_KEY})
+    # Return top 12 trending movies
+    return jsonify(format_movie_results(data)[:12])
 
 @app.route('/recommend', methods=['POST'])
 def recommend_movies():
@@ -92,27 +91,22 @@ def recommend_movies():
         movies = data.get("movies", [])
         page = int(data.get("page", 1))
 
-        print(f"🎬 Received: genres={genres}, actors={actors}, movies={movies}, page={page}")
-
         actor_ids = [search_actor(a) for a in actors if a]
         actor_ids = [a for a in actor_ids if a]
 
         all_results = []
 
-        # Genre + Actor recommendations
         if genres or actor_ids:
             all_results.extend(discover_movies(genres=genres, actors=actor_ids, page=page))
 
-        # Movie-based recommendations
         for movie in movies:
             mid = search_movie(movie)
             if mid:
                 all_results.extend(get_similar_movies(mid, page=page))
 
         if not all_results:
-            return jsonify({"error": "Could not fetch recommendations (check API key or internet connection)."}), 200
+            return jsonify({"error": "Could not fetch recommendations."}), 200
 
-        # Remove duplicates
         seen = set()
         unique_results = []
         for r in all_results:
@@ -123,13 +117,9 @@ def recommend_movies():
         return jsonify(unique_results[:18])
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return jsonify({"error": f"Server error: {str(e)}"}), 500
-
 
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    app.run(host="0.0.0.0", port=port, debug=True)

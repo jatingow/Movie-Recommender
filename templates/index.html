@@ -4,38 +4,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 Personalized Movie Recommender</title>
+    <title>🎬 WatchIt | Talk of the Town</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-    <div class="container">
-        <h1>🎥 Personalized Movie Recommender</h1>
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-play-circle"></i> WATCHIT</div>
+        <div class="nav-links">
+            <a href="#" class="active">Explore</a>
+            <a href="#">My Tickets</a>
+            <a href="#">Watchlist</a>
+        </div>
+        <div class="nav-actions">
+            <i class="fas fa-search"></i>
+            <i class="fas fa-bell"></i>
+            <div class="user-avatar"><i class="fas fa-user"></i></div>
+        </div>
+    </nav>
 
-        <form id="preferenceForm">
-            <h3>Select Your Favorite Genres</h3>
-            <div id="genresContainer">
-                {% for g in genres %}
-                <label>
-                    <input type="checkbox" name="genre" value="{{ g['id'] }}">
-                    <span class="genre-tag">{{ g['name'] }}</span>
-                </label>
-                {% endfor %}
+    <div class="main-container">
+        <section class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-bullhorn"></i> Talk Of The Town</h2>
             </div>
 
-            <h3>Favorite Actors (comma-separated)</h3>
-            <input type="text" id="actors" placeholder="e.g. Leonardo DiCaprio, Robert Downey Jr.">
+            <div id="trending-grid" class="movie-grid">
+            </div>
+        </section>
 
-            <h3>Favorite Movies (comma-separated)</h3>
-            <input type="text" id="movies" placeholder="e.g. Inception, Iron Man">
+        <section class="content-section engine-section">
+            <div class="section-header">
+                <h2><i class="fas fa-sliders-h"></i> Discovery Engine</h2>
+                <p>Tell us what you like, we'll find what you'll love.</p>
+            </div>
 
-            <button type="button" onclick="getRecommendations(1)">Get Recommendations</button>
-        </form>
+            <div class="discovery-panel">
+                <form id="preferenceForm">
+                    <div class="input-group">
+                        <label>EXPLORE GENRES</label>
+                        <div id="genresContainer">
+                            {% for g in genres %}
+                            <label>
+                                <input type="checkbox" name="genre" value="{{ g['id'] }}">
+                                <span class="genre-tag">{{ g['name'] }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-        <div id="results">
-        </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>TOP ACTORS</label>
+                            <input type="text" id="actors" placeholder="e.g. Cillian Murphy, Zendaya...">
+                        </div>
 
-        <div id="pagination"></div>
+                        <div class="input-group">
+                            <label>MUST-WATCH MOVIES</label>
+                            <input type="text" id="movies" placeholder="e.g. Inception, Dune...">
+                        </div>
+                    </div>
+
+                    <button type="button" class="generate-btn" onclick="getRecommendations(1)">
+                        Generate Watchlist <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="content-section" id="results-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-ticket-alt"></i> Your Curated Watchlist</h2>
+            </div>
+            <div id="results" class="movie-grid"></div>
+            <div id="pagination"></div>
+        </section>
     </div>
 
     <script src="/static/script.js"></script>

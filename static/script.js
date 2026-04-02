@@ -1,10 +1,41 @@
 let currentPage = 1;
 let lastResults = [];
 
+// --- Execute on Page Load ---
+document.addEventListener("DOMContentLoaded", () => {
+    fetchTrendingMovies();
+});
+
+// --- Fetch Trending Movies ---
+async function fetchTrendingMovies() {
+    try {
+        const response = await fetch("/api/trending");
+        const data = await response.json();
+
+        const trendingGrid = document.getElementById("trending-grid");
+        trendingGrid.innerHTML = "";
+
+        if (Array.isArray(data) && data.length > 0) {
+            data.forEach(movie => {
+                trendingGrid.appendChild(createMovieCardElement(movie, "Trending"));
+            });
+        } else {
+            trendingGrid.innerHTML = `<p style="color:red;">Could not load trending movies.</p>`;
+        }
+    } catch (error) {
+        console.error("Error fetching trending:", error);
+    }
+}
+
+// --- Fetch Recommendations ---
 async function getRecommendations(page = 1) {
     const genres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(el => el.value);
     const actors = document.getElementById('actors').value.split(',').map(a => a.trim());
     const movies = document.getElementById('movies').value.split(',').map(m => m.trim());
+
+    // Show the results section
+    document.getElementById("results-section").style.display = "block";
+    document.getElementById("results").innerHTML = "<p>Loading...</p>";
 
     const response = await fetch("/recommend", {
         method: "POST",
@@ -14,7 +45,6 @@ async function getRecommendations(page = 1) {
 
     const data = await response.json();
 
-    // ✅ Handle API error (backend sent object with error)
     if (!Array.isArray(data)) {
         document.getElementById("results").innerHTML =
             `<p style="color:red;">${data.error || "Something went wrong."}</p>`;
@@ -24,17 +54,19 @@ async function getRecommendations(page = 1) {
     lastResults = data;
     currentPage = 1;
     renderPage(currentPage);
+
+    // Smooth scroll down to results
+    document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
 }
 
+// --- Render Recommendation Pagination ---
 function renderPage(page) {
-    const resultsPerPage = 6;
+    const resultsPerPage = 12; // Increased to fill the grid better
     const start = (page - 1) * resultsPerPage;
     const end = start + resultsPerPage;
 
-    // ✅ Make sure lastResults is an array
     if (!Array.isArray(lastResults)) {
-        document.getElementById("results").innerHTML =
-            `<p style="color:red;">No results to show.</p>`;
+        document.getElementById("results").innerHTML = `<p style="color:red;">No results to show.</p>`;
         return;
     }
 
@@ -43,29 +75,19 @@ function renderPage(page) {
     container.innerHTML = "";
 
     movies.forEach(m => {
-        const card = document.createElement("div");
-        card.className = "movie-card";
-        card.innerHTML = `
-      <img src="${m.poster || ''}" alt="${m.title}">
-      <h3>${m.title}</h3>
-      <p>⭐ ${m.rating}</p>
-      <p>${m.release_date}</p>
-      <p>${m.overview}</p>
-    `;
-        container.appendChild(card);
+        container.appendChild(createMovieCardElement(m, "Recommended"));
     });
 
-    // Pagination buttons
     const pagination = document.getElementById("pagination");
     pagination.innerHTML = `
-    <button ${page === 1 ? "disabled" : ""} onclick="prevPage()">Prev</button>
-    <span>Page ${page}</span>
-    <button ${end >= lastResults.length ? "disabled" : ""} onclick="nextPage()">Next</button>
-  `;
+        <button ${page === 1 ? "disabled" : ""} onclick="prevPage()">Prev</button>
+        <span>Page ${page}</span>
+        <button ${end >= lastResults.length ? "disabled" : ""} onclick="nextPage()">Next</button>
+    `;
 }
 
 function nextPage() {
-    if ((currentPage * 6) < lastResults.length) {
+    if ((currentPage * 12) < lastResults.length) {
         currentPage++;
         renderPage(currentPage);
     }
@@ -76,4 +98,27 @@ function prevPage() {
         currentPage--;
         renderPage(currentPage);
     }
+}
+
+// --- Helper: Create consistent movie cards ---
+function createMovieCardElement(movie, subtitleTag) {
+    const posterUrl = movie.poster ? movie.poster : 'https://via.placeholder.com/300x450/121216/ffffff?text=No+Poster';
+    const year = movie.release_date && movie.release_date !== "N/A" ? movie.release_date.split('-')[0] : '';
+
+    // Format the subtitle under the title (e.g., "Movie • 2026")
+    let subtitleText = "Movie";
+    if (year) subtitleText += ` • ${year}`;
+
+    const card = document.createElement("div");
+    card.className = "movie-card";
+    card.innerHTML = `
+        <div class="movie-poster-container">
+            <img src="${posterUrl}" alt="${movie.title}">
+        </div>
+        <div class="movie-info">
+            <h4>${movie.title}</h4>
+            <p>${subtitleText}</p>
+        </div>
+    `;
+    return card;
 }
