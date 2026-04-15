@@ -1,5 +1,6 @@
 let currentApiPage = 1;
 let lastResults = [];
+let trendingResults = []; // NEW: Keep track of trending movies
 let watchlist = JSON.parse(localStorage.getItem('myWatchlist')) || [];
 
 // --- Execute on Page Load ---
@@ -9,24 +10,33 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- Fetch Trending Movies ---
+
 async function fetchTrendingMovies() {
     try {
         const response = await fetch("/api/trending");
         const data = await response.json();
 
-        const trendingGrid = document.getElementById("trending-grid");
-        trendingGrid.innerHTML = "";
-
         if (Array.isArray(data) && data.length > 0) {
-            data.forEach(movie => {
-                trendingGrid.appendChild(createMovieCardElement(movie, "Trending"));
-            });
+            trendingResults = data; // Save the data globally
+            renderTrending();       // Call the new render function
         } else {
-            trendingGrid.innerHTML = `<p style="color:red;">Could not load trending movies.</p>`;
+            document.getElementById("trending-grid").innerHTML = `<p style="color:red;">Could not load trending movies.</p>`;
         }
     } catch (error) {
         console.error("Error fetching trending:", error);
     }
+}
+
+// --- NEW: Render Trending Movies ---
+function renderTrending() {
+    const trendingGrid = document.getElementById("trending-grid");
+    if (!trendingGrid) return;
+
+    trendingGrid.innerHTML = "";
+
+    trendingResults.forEach(movie => {
+        trendingGrid.appendChild(createMovieCardElement(movie));
+    });
 }
 
 // --- Fetch Recommendations ---
@@ -125,7 +135,11 @@ function prevPage() {
 
 // --- Watchlist State Management ---
 function toggleWatchlist(title) {
-    const movie = lastResults.find(m => m.title === title) || watchlist.find(m => m.title === title);
+    // Now it checks Search Results, Trending Results, AND the Watchlist!
+    const movie = lastResults.find(m => m.title === title) ||
+        trendingResults.find(m => m.title === title) ||
+        watchlist.find(m => m.title === title);
+
     if (!movie) return;
 
     const index = watchlist.findIndex(m => m.title === title);
@@ -138,8 +152,9 @@ function toggleWatchlist(title) {
 
     localStorage.setItem('myWatchlist', JSON.stringify(watchlist));
 
-    // Update UI immediately
+    // Update all UI sections immediately
     renderWatchlist();
+    renderTrending();
     if (document.getElementById("results-section").style.display !== "none") {
         renderResults();
     }
@@ -160,17 +175,21 @@ function renderWatchlist() {
     });
 }
 
-// --- Helpers: Create Movie Cards ---
-function createMovieCardElement(movie, subtitleTag) {
+// --- Helper: Create Trending Movie Cards ---
+function createMovieCardElement(movie) {
     const posterUrl = movie.poster ? movie.poster : 'https://via.placeholder.com/300x450/121216/ffffff?text=No+Poster';
     const year = movie.release_date && movie.release_date !== "N/A" ? movie.release_date.split('-')[0] : '';
-    let subtitleText = subtitleTag || "Movie";
-    if (year) subtitleText += ` • ${year}`;
+    const safeTitle = movie.title.replace(/'/g, "\\'");
+
+    // Check if the movie is already in the watchlist
+    const isInWatchlist = watchlist.some(w => w.title === movie.title);
+    const btnText = isInWatchlist ? "❌ Remove" : "🔖 Add to Watchlist";
+    const btnClass = isInWatchlist ? "remove-btn" : "add-btn";
 
     const card = document.createElement("div");
     card.className = "movie-card";
 
-    // Simple version for Talk of the Town
+    // We add a tiny bit of margin-top to the button to push it to the bottom of the card
     card.innerHTML = `
         <img src="${posterUrl}" alt="${movie.title}">
         <div class="card-body">
@@ -179,6 +198,7 @@ function createMovieCardElement(movie, subtitleTag) {
                 <span>⭐ ${movie.rating ? movie.rating.toFixed(1) : 'NR'}</span>
                 <span>${year}</span>
             </div>
+            <button class="watchlist-btn ${btnClass}" onclick="toggleWatchlist('${safeTitle}')" style="margin-top: 15px;">${btnText}</button>
         </div>
     `;
     return card;
@@ -208,5 +228,3 @@ function createDetailedMovieCard(m) {
     `;
     return card;
 }
-
-// --- Fetch AI Vibe Recommendations ---

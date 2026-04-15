@@ -3,14 +3,15 @@ import requests
 import google.generativeai as genai
 import json
 import os
-
+from dotenv import load_dotenv
 app = Flask(__name__)
 
-# ---------- API Keys & Config ---------- #
-API_KEY = "271274173a33097a96c2c6e7495bec0e"  # TMDB API key
+load_dotenv() # Loads the hidden .env file
+
+API_KEY = os.getenv("TMDB_API_KEY")
 BASE_URL = "https://api.themoviedb.org/3"
 
-GEMINI_API_KEY = "AIzaSyCdX3SIi1LBbUQ64quQn6qCXRx1njL7Ht0" # Gemini API key
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash') 
 
@@ -173,7 +174,7 @@ def vibe_search():
             
             if tmdb_data and tmdb_data.get("results"):
                 m = tmdb_data["results"][0] # Take the top match
-                poster = f"[https://image.tmdb.org/t/p/w500](https://image.tmdb.org/t/p/w500){m['poster_path']}" if m.get("poster_path") else ""
+                poster = f"https://image.tmdb.org/t/p/w500{m['poster_path']}" if m.get("poster_path") else ""
                 final_results.append({
                     "title": m.get("title", rec["title"]),
                     "overview": m.get("overview", "No description available."),
