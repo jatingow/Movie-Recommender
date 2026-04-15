@@ -1,9 +1,11 @@
-let currentPage = 1;
+let currentApiPage = 1;
 let lastResults = [];
+let watchlist = JSON.parse(localStorage.getItem('myWatchlist')) || [];
 
 // --- Execute on Page Load ---
 document.addEventListener("DOMContentLoaded", () => {
     fetchTrendingMovies();
+    renderWatchlist();
 });
 
 // --- Fetch Trending Movies ---
@@ -29,96 +31,182 @@ async function fetchTrendingMovies() {
 
 // --- Fetch Recommendations ---
 async function getRecommendations(page = 1) {
+    currentApiPage = page;
     const genres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(el => el.value);
-    const actors = document.getElementById('actors').value.split(',').map(a => a.trim());
-    const movies = document.getElementById('movies').value.split(',').map(m => m.trim());
 
-    // Show the results section
+    // FIX: Filter out empty strings so we don't send [""] to the backend
+    const actors = document.getElementById('actors').value.split(',').map(a => a.trim()).filter(a => a !== "");
+    const movies = document.getElementById('movies').value.split(',').map(m => m.trim()).filter(m => m !== "");
+
     document.getElementById("results-section").style.display = "block";
     document.getElementById("results").innerHTML = "<p>Loading...</p>";
 
-    const response = await fetch("/recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ genres, actors, movies, page })
-    });
-
-    const data = await response.json();
-
-    if (!Array.isArray(data)) {
-        document.getElementById("results").innerHTML =
-            `<p style="color:red;">${data.error || "Something went wrong."}</p>`;
-        return;
-    }
-
-    lastResults = data;
-    currentPage = 1;
-    renderPage(currentPage);
-
-    // Smooth scroll down to results
-    document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
+    // ... (rest of the function remains the same)
 }
 
-// --- Render Recommendation Pagination ---
-function renderPage(page) {
-    const resultsPerPage = 12; // Increased to fill the grid better
-    const start = (page - 1) * resultsPerPage;
-    const end = start + resultsPerPage;
+// --- Fetch AI Vibe Recommendations ---
+async function getVibeRecommendations() {
+    const vibeText = document.getElementById('vibe-input').value.trim();
+    if (!vibeText) return alert("Please enter a vibe first!");
 
-    if (!Array.isArray(lastResults)) {
-        document.getElementById("results").innerHTML = `<p style="color:red;">No results to show.</p>`;
-        return;
+    const resultsSection = document.getElementById("results-section");
+    const container = document.getElementById("results");
+
+    resultsSection.style.display = "block";
+    container.innerHTML = `<p style="color: var(--accent-red); grid-column: 1 / -1; text-align: center;">
+        <i class="fas fa-spinner fa-spin"></i> Our AI is searching the multiverse for your perfect match...
+    </p>`;
+
+    resultsSection.scrollIntoView({ behavior: "smooth" });
+
+    try {
+        const response = await fetch("/api/vibe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ vibe: vibeText })
+        });
+
+        const data = await response.json();
+
+        // FIX: Properly display the error on the screen if the AI fails
+        if (data.error) {
+            container.innerHTML = `<p style="color:red; grid-column: 1 / -1; text-align: center;">${data.error}</p>`;
+            return;
+        }
+
+        container.innerHTML = "";
+        data.forEach(m => {
+            container.appendChild(createDetailedMovieCard(m));
+        });
+
+        document.getElementById("pagination").innerHTML = "";
+
+    } catch (error) {
+        container.innerHTML = `<p style="color:red; grid-column: 1 / -1; text-align: center;">Network error. Could not reach the AI.</p>`;
     }
+}
 
-    const movies = lastResults.slice(start, end);
+// --- Render Discovery Results ---
+function renderResults() {
     const container = document.getElementById("results");
     container.innerHTML = "";
 
-    movies.forEach(m => {
-        container.appendChild(createMovieCardElement(m, "Recommended"));
+    if (!Array.isArray(lastResults) || lastResults.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted);">No results found for this page.</p>`;
+        updatePaginationUI(true);
+        return;
+    }
+
+    lastResults.forEach(m => {
+        container.appendChild(createDetailedMovieCard(m));
     });
 
+    updatePaginationUI(false);
+}
+
+function updatePaginationUI(isEmpty) {
     const pagination = document.getElementById("pagination");
     pagination.innerHTML = `
-        <button ${page === 1 ? "disabled" : ""} onclick="prevPage()">Prev</button>
-        <span>Page ${page}</span>
-        <button ${end >= lastResults.length ? "disabled" : ""} onclick="nextPage()">Next</button>
+        <button class="pagination-btn" ${currentApiPage === 1 ? "disabled" : ""} onclick="prevPage()">Prev</button>
+        <span>Page ${currentApiPage}</span>
+        <button class="pagination-btn" ${isEmpty ? "disabled" : ""} onclick="nextPage()">Next</button>
     `;
 }
 
 function nextPage() {
-    if ((currentPage * 12) < lastResults.length) {
-        currentPage++;
-        renderPage(currentPage);
-    }
+    getRecommendations(currentApiPage + 1);
 }
 
 function prevPage() {
-    if (currentPage > 1) {
-        currentPage--;
-        renderPage(currentPage);
+    if (currentApiPage > 1) {
+        getRecommendations(currentApiPage - 1);
     }
 }
 
-// --- Helper: Create consistent movie cards ---
+// --- Watchlist State Management ---
+function toggleWatchlist(title) {
+    const movie = lastResults.find(m => m.title === title) || watchlist.find(m => m.title === title);
+    if (!movie) return;
+
+    const index = watchlist.findIndex(m => m.title === title);
+
+    if (index !== -1) {
+        watchlist.splice(index, 1);
+    } else {
+        watchlist.push(movie);
+    }
+
+    localStorage.setItem('myWatchlist', JSON.stringify(watchlist));
+
+    // Update UI immediately
+    renderWatchlist();
+    if (document.getElementById("results-section").style.display !== "none") {
+        renderResults();
+    }
+}
+
+function renderWatchlist() {
+    const container = document.getElementById("watchlist-results");
+    if (!container) return;
+
+    if (watchlist.length === 0) {
+        container.innerHTML = "<p style='color: var(--text-muted); grid-column: 1 / -1;'>Your watchlist is empty. Add some movies to get started!</p>";
+        return;
+    }
+
+    container.innerHTML = "";
+    watchlist.forEach(m => {
+        container.appendChild(createDetailedMovieCard(m));
+    });
+}
+
+// --- Helpers: Create Movie Cards ---
 function createMovieCardElement(movie, subtitleTag) {
     const posterUrl = movie.poster ? movie.poster : 'https://via.placeholder.com/300x450/121216/ffffff?text=No+Poster';
     const year = movie.release_date && movie.release_date !== "N/A" ? movie.release_date.split('-')[0] : '';
-
-    // Format the subtitle under the title (e.g., "Movie • 2026")
-    let subtitleText = "Movie";
+    let subtitleText = subtitleTag || "Movie";
     if (year) subtitleText += ` • ${year}`;
 
     const card = document.createElement("div");
     card.className = "movie-card";
+
+    // Simple version for Talk of the Town
     card.innerHTML = `
-        <div class="movie-poster-container">
-            <img src="${posterUrl}" alt="${movie.title}">
-        </div>
-        <div class="movie-info">
+        <img src="${posterUrl}" alt="${movie.title}">
+        <div class="card-body">
             <h4>${movie.title}</h4>
-            <p>${subtitleText}</p>
+            <div class="card-meta">
+                <span>⭐ ${movie.rating ? movie.rating.toFixed(1) : 'NR'}</span>
+                <span>${year}</span>
+            </div>
         </div>
     `;
     return card;
 }
+
+function createDetailedMovieCard(m) {
+    const safeTitle = m.title.replace(/'/g, "\\'");
+    const posterSrc = m.poster ? m.poster : "https://via.placeholder.com/500x750/172a45/ccd6f6?text=No+Poster";
+
+    const isInWatchlist = watchlist.some(w => w.title === m.title);
+    const btnText = isInWatchlist ? "❌ Remove" : "🔖 Add to Watchlist";
+    const btnClass = isInWatchlist ? "remove-btn" : "add-btn";
+
+    const card = document.createElement("div");
+    card.className = "movie-card";
+    card.innerHTML = `
+      <img src="${posterSrc}" alt="${m.title}">
+      <div class="card-body">
+          <h4>${m.title}</h4>
+          <div class="card-meta">
+              <span>⭐ ${m.rating ? m.rating.toFixed(1) : 'NR'}</span>
+              <span>${m.release_date ? m.release_date.split('-')[0] : 'N/A'}</span>
+          </div>
+     <p class="overview" style="${m.ai_reason ? 'color: #e2e8f0; font-weight: 600;' : ''}">
+    ${m.ai_reason ? '✨ ' + m.ai_reason : m.overview}
+</p>
+    `;
+    return card;
+}
+
+// --- Fetch AI Vibe Recommendations ---

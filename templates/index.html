@@ -14,13 +14,7 @@
         <div class="logo"><i class="fas fa-play-circle"></i> WATCHIT</div>
         <div class="nav-links">
             <a href="#" class="active">Explore</a>
-            <a href="#">My Tickets</a>
-            <a href="#">Watchlist</a>
-        </div>
-        <div class="nav-actions">
-            <i class="fas fa-search"></i>
-            <i class="fas fa-bell"></i>
-            <div class="user-avatar"><i class="fas fa-user"></i></div>
+            <a href="#watchlist-section">Watchlist</a>
         </div>
     </nav>
 
@@ -56,13 +50,26 @@
 
                     <div class="input-row">
                         <div class="input-group">
-                            <label>TOP ACTORS</label>
+                            <label>Fav ACTORS</label>
                             <input type="text" id="actors" placeholder="e.g. Cillian Murphy, Zendaya...">
                         </div>
 
                         <div class="input-group">
-                            <label>MUST-WATCH MOVIES</label>
+                            <label>Fav MOVIES</label>
                             <input type="text" id="movies" placeholder="e.g. Inception, Dune...">
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 15px;">
+                        <label style="color: var(--accent-red);"><i class="fas fa-sparkles"></i> AI VIBE CHECK</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="vibe-input"
+                                placeholder="e.g. A visually stunning sci-fi with a plot twist..."
+                                style="border-color: rgba(229, 9, 20, 0.4);">
+                            <button type="button" class="generate-btn" onclick="getVibeRecommendations()"
+                                style="white-space: nowrap;">
+                                Ask AI
+                            </button>
                         </div>
                     </div>
 
@@ -75,10 +82,19 @@
 
         <section class="content-section" id="results-section" style="display: none;">
             <div class="section-header">
-                <h2><i class="fas fa-ticket-alt"></i> Your Curated Watchlist</h2>
+                <h2><i class="fas fa-search"></i> Discovery Results</h2>
             </div>
             <div id="results" class="movie-grid"></div>
             <div id="pagination"></div>
+        </section>
+
+        <hr style="border-color: var(--border-color); margin: 60px 0 40px 0;">
+
+        <section class="content-section" id="watchlist-section">
+            <div class="section-header">
+                <h2><i class="fas fa-bookmark"></i> My Watchlist</h2>
+            </div>
+            <div id="watchlist-results" class="movie-grid"></div>
         </section>
     </div>
 
