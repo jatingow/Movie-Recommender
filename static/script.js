@@ -44,14 +44,48 @@ async function getRecommendations(page = 1) {
     currentApiPage = page;
     const genres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(el => el.value);
 
-    // FIX: Filter out empty strings so we don't send [""] to the backend
+    // Filter out empty strings so we don't send [""] to the backend
     const actors = document.getElementById('actors').value.split(',').map(a => a.trim()).filter(a => a !== "");
     const movies = document.getElementById('movies').value.split(',').map(m => m.trim()).filter(m => m !== "");
 
-    document.getElementById("results-section").style.display = "block";
-    document.getElementById("results").innerHTML = "<p>Loading...</p>";
+    if (genres.length === 0 && actors.length === 0 && movies.length === 0) {
+        alert("Please select at least one genre, actor, or movie!");
+        return;
+    }
 
-    // ... (rest of the function remains the same)
+    const resultsSection = document.getElementById("results-section");
+    const container = document.getElementById("results");
+
+    resultsSection.style.display = "block";
+    container.innerHTML = `<p style="color: var(--text-muted); grid-column: 1 / -1; text-align: center;">
+        <i class="fas fa-spinner fa-spin"></i> Finding your perfect movies...
+    </p>`;
+
+    resultsSection.scrollIntoView({ behavior: "smooth" });
+
+    try {
+        const response = await fetch("/recommend", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ genres, actors, movies, page })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            container.innerHTML = `<p style="color:red; grid-column: 1 / -1; text-align: center;">${data.error}</p>`;
+            updatePaginationUI(true);
+            return;
+        }
+
+        lastResults = data;
+        renderResults();
+
+    } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        container.innerHTML = `<p style="color:red; grid-column: 1 / -1; text-align: center;">Network error. Could not fetch recommendations.</p>`;
+        updatePaginationUI(true);
+    }
 }
 
 // --- Fetch AI Vibe Recommendations ---
@@ -222,9 +256,11 @@ function createDetailedMovieCard(m) {
               <span>⭐ ${m.rating ? m.rating.toFixed(1) : 'NR'}</span>
               <span>${m.release_date ? m.release_date.split('-')[0] : 'N/A'}</span>
           </div>
-     <p class="overview" style="${m.ai_reason ? 'color: #e2e8f0; font-weight: 600;' : ''}">
-    ${m.ai_reason ? '✨ ' + m.ai_reason : m.overview}
-</p>
+          <p class="overview" style="${m.ai_reason ? 'color: #e2e8f0; font-weight: 600;' : ''}">
+              ${m.ai_reason ? '✨ ' + m.ai_reason : m.overview}
+          </p>
+          <button class="watchlist-btn ${btnClass}" onclick="toggleWatchlist('${safeTitle}')" style="margin-top: 15px;">${btnText}</button>
+      </div>
     `;
     return card;
 }

@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import google.generativeai as genai
 import json
+import concurrent.futures
 import os
 from dotenv import load_dotenv
 app = Flask(__name__)
@@ -25,7 +26,6 @@ def safe_request(url, params=None):
         print(f"⚠️ API connection error: {e}")
         return {} 
 
-# ---------- Helper Functions ---------- #
 def get_genre_list():
     url = f"{BASE_URL}/genre/movie/list"
     data = safe_request(url, {"api_key": API_KEY})
@@ -96,27 +96,45 @@ def recommend_movies():
         data = request.get_json()
         genres = data.get("genres", [])
         
-        # FIX: Strip out empty strings from the inputs so we don't confuse TMDB
+        # Clean inputs
         actors = [a.strip() for a in data.get("actors", []) if a.strip()]
         movies = [m.strip() for m in data.get("movies", []) if m.strip()]
         page = int(data.get("page", 1))
 
-        actor_ids = [search_actor(a) for a in actors]
-        actor_ids = [a for a in actor_ids if a] # Remove any Nones
-
         all_results = []
 
-        if genres or actor_ids:
-            all_results.extend(discover_movies(genres=genres, actors=actor_ids, page=page))
+        # --- MULTI-THREADING STARTS HERE ---
+        # We create a "ThreadPool" that can do multiple tasks at once
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            
+            # 1. Fetch all actor IDs at the exact same time
+            if actors:
+                actor_ids = list(executor.map(search_actor, actors))
+                actor_ids = [a for a in actor_ids if a] # Clean out None values
+            else:
+                actor_ids = []
 
-        for movie in movies:
-            mid = search_movie(movie)
-            if mid:
-                all_results.extend(get_similar_movies(mid, page=page))
+            # 2. Fetch the base genre/actor recommendations
+            if genres or actor_ids:
+                all_results.extend(discover_movies(genres=genres, actors=actor_ids, page=page))
+
+            # 3. Fetch all similar movies at the exact same time
+            if movies:
+                # First, get all the IDs for the movies the user typed
+                movie_ids = list(executor.map(search_movie, movies))
+                movie_ids = [mid for mid in movie_ids if mid]
+                
+                # Next, fetch the "similar movies" for all those IDs concurrently
+                # We use a list comprehension to pass the page argument safely
+                futures = [executor.submit(get_similar_movies, mid, page) for mid in movie_ids]
+                for future in concurrent.futures.as_completed(futures):
+                    all_results.extend(future.result())
+        # --- MULTI-THREADING ENDS HERE ---
 
         if not all_results:
             return jsonify({"error": "Could not fetch recommendations."}), 200
 
+        # Remove duplicates
         seen = set()
         unique_results = []
         for r in all_results:
@@ -127,8 +145,9 @@ def recommend_movies():
         return jsonify(unique_results[:18])
 
     except Exception as e:
-        return jsonify({"error": f"Server error: {str(e)}"}), 500
-
+        print(f"Server Error: {e}")
+        return jsonify({"error": "An error occurred while fetching movies."}), 500
+    
 @app.route('/api/vibe', methods=['POST'])
 def vibe_search():
     data = request.get_json()
